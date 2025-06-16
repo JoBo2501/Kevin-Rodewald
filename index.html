@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktives Trainer-Dossier: Kevin Rodewald</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@700;800&family=Source+Serif+4:opsz,wght@8..60,400;600&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Modern Newsprint -->
+    <!-- Application Structure Plan: The SPA is redesigned as a player-centric preparation tool with a modern, journalistic layout inspired by publications like SZ or Spiegel. It uses a single-column, content-focused layout with strong typography (Roboto Slab for headlines, Source Serif 4 for body) to enhance readability and seriousness. The structure remains thematic but is presented more like a long-form article: A strong 'Leitartikel' (Hero), key 'Fakten im Fokus' (Dashboard), a deep-dive into his 'Doktrin', followed by 'Karriere-Analyse', 'Mensch & Manager', the interactive 'Vorbereitungs-Labor', and a concluding 'Analyse deiner Chance'. This layout prioritizes a premium reading experience over a standard web app feel. -->
+    <!-- Visualization & Content Choices: Report Info: Profile Stats -> Goal: Inform -> Viz: Minimalist stat blocks with strong typography. Report Info: Philosophy/Tactics -> Goal: Organize/Explain -> Viz: Tabbed interface styled as sub-sections of an article. Report Info: Career path/performance -> Goal: Show Change/Compare -> Viz: Vertical, article-style timeline & a cleanly integrated Chart.js Bar Chart. Report Info: Personality -> Goal: Characterize -> Viz: Pull-quotes and analytical text blocks. UPDATED: Gemini API Features -> Goal: Simulate & Personalize -> Viz: Integrated into a distinct, shaded 'Special' section within the article flow. Report Info: Conclusion -> Goal: Advise -> Viz: Pro/Con List styled as summary boxes. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Source Serif 4', serif;
+            background-color: #f8f8f8;
+            color: #1a1a1a;
+        }
+        h1, h2, h3, h4, h5, h6, .font-headline {
+            font-family: 'Roboto Slab', serif;
+        }
+        .prose-custom {
+            font-size: 1.125rem;
+            line-height: 1.77;
+        }
+        .prose-custom p, .prose-custom ul {
+            margin-bottom: 1.25em;
+        }
+        .prose-custom h3 {
+            font-size: 2.5rem;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            font-weight: 800;
+        }
+        .prose-custom h4 {
+            font-size: 1.5rem;
+            line-height: 1.4;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
+        .nav-link {
+            transition: color 0.3s;
+            position: relative;
+        }
+        .nav-link:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            display: block;
+            margin-top: 5px;
+            right: 0;
+            background: #0d9488;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover:after, .nav-link.active:after {
+            width: 100%;
+            left: 0;
+        }
+        
+        .doctrine-button {
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .doctrine-button.active {
+            border-bottom-color: #0d9488;
+            color: #0d9488;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            position: relative; width: 100%; max-width: 800px; margin-left: auto; margin-right: auto; height: 400px; max-height: 500px;
+        }
+
+        .gemini-result {
+            white-space: pre-wrap; background-color: #fff; border: 1px solid #e2e8f0; padding: 1.5rem; border-radius: 0.25rem; margin-top: 1.5rem; min-height: 100px; line-height: 1.7; font-size: 1rem;
+        }
+         .loader {
+            width: 48px; height: 48px; border: 5px solid #e5e7eb; border-bottom-color: #0d9488; border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            from { transform: rotate(0deg); } to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-gray-200">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex-shrink-0">
+                    <h1 class="text-2xl font-bold tracking-tighter text-gray-900">Dossier: Rodewald</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-6">
+                        <a href="#doctrine" class="nav-link text-sm font-semibold tracking-wide text-gray-600 hover:text-gray-900">Doktrin</a>
+                        <a href="#trajectory" class="nav-link text-sm font-semibold tracking-wide text-gray-600 hover:text-gray-900">Analyse</a>
+                        <a href="#man-manager" class="nav-link text-sm font-semibold tracking-wide text-gray-600 hover:text-gray-900">Manager</a>
+                        <a href="#gemini-lab" class="nav-link text-sm font-semibold tracking-wide text-gray-600 hover:text-gray-900">Labor</a>
+                        <a href="#opportunity" class="nav-link text-sm font-semibold tracking-wide text-gray-600 hover:text-gray-900">Fazit</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 prose-custom">
+
+        <section id="hero">
+            <h2 class="font-headline text-5xl md:text-7xl font-extrabold !leading-tight tracking-tighter text-center">Der Architekt des anspruchsvollen Spiels</h2>
+            <p class="text-xl md:text-2xl text-slate-600 text-center mt-6 lead">Kevin Rodewald übernimmt den FC Eilenburg mit einer klaren Vision. Für Spieler bedeutet das eine immense Chance – und eine ebenso große Herausforderung. Eine Analyse.</p>
+            <div class="w-24 h-1 bg-teal-600 mx-auto my-12"></div>
+        </section>
+
+        <section id="dashboard" class="my-20">
+            <h3 class="font-headline text-center">Fakten im Fokus</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mt-8 text-center">
+                <div>
+                    <p class="text-4xl font-headline font-bold text-teal-700">A</p>
+                    <p class="text-sm text-slate-600 tracking-wider font-semibold uppercase mt-2">Lizenz</p>
+                </div>
+                <div>
+                    <p class="text-4xl font-headline font-bold text-teal-700">2023</p>
+                    <p class="text-sm text-slate-600 tracking-wider font-semibold uppercase mt-2">Meister</p>
+                </div>
+                <div>
+                    <p class="text-4xl font-headline font-bold text-teal-700">3-4-3</p>
+                    <p class="text-sm text-slate-600 tracking-wider font-semibold uppercase mt-2">System</p>
+                </div>
+                <div>
+                    <p class="text-4xl font-headline font-bold text-teal-700">Ironman</p>
+                    <p class="text-sm text-slate-600 tracking-wider font-semibold uppercase mt-2">Mentalität</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="doctrine" class="my-20">
+            <h3>Die Rodewald-Doktrin</h3>
+            <p>Um Kevin Rodewald zu verstehen, muss man seine Philosophie als eine nicht verhandelbare Grundlage seiner Arbeit begreifen. Er ist kein Pragmatiker, der sein System dem Gegner anpasst, sondern ein Überzeugungstäter, der dem Gegner sein System aufzwingen will. Das stellt extreme Anforderungen an jeden Spieler.</p>
+            
+            <div class="mt-8 border-t border-gray-200">
+                <div class="flex space-x-8 -mb-px">
+                    <button data-target="content-philosophy" class="doctrine-button py-4 px-1 text-lg font-headline active">Philosophie</button>
+                    <button data-target="content-formation" class="doctrine-button py-4 px-1 text-lg font-headline">Formation</button>
+                    <button data-target="content-requirements" class="doctrine-button py-4 px-1 text-lg font-headline">Anforderung</button>
+                </div>
+                 <div class="py-8">
+                    <div id="content-philosophy" class="doctrine-content active">
+                        <h4>Spielerische Dominanz als Maxime</h4>
+                        <p>Rodewald lehnt "Kick and Rush" vehement ab. Seine Vorbilder liegen in den technisch anspruchsvollen Schulen Spaniens und der Niederlande. Für dich als Spieler bedeutet das: Der Ball ist dein Freund, Passsicherheit ist Pflicht, und Mut im Spielaufbau wird erwartet, auch unter Druck.</p>
+                        <ul class="list-disc pl-5">
+                            <li><strong>Entwicklung durch Sieg:</strong> Er sieht den Sieg als ultimativen Entwicklungstreiber. Man lernt zu gewinnen, indem man Spiele dominiert.</li>
+                            <li><strong>Kompromisslose Identität:</strong> Die eigene Spielidee wird nicht geopfert. Erwartet wird die absolute Überzeugung, mit spielerischen Mitteln zum Erfolg zu kommen.</li>
+                        </ul>
+                    </div>
+                    <div id="content-formation" class="doctrine-content hidden">
+                        <h4>Intelligenz im 3-4-3 System</h4>
+                        <p>Die bevorzugte 3-4-3-Formation ist eine Ansage. Sie erfordert extreme taktische Disziplin und Spielintelligenz. Die Positionen sind nicht starr, sondern Rollen in einem dynamischen Gefüge. Als Schienenspieler musst du die Linie rauf und runter marschieren, als Innenverteidiger den Spielaufbau gestalten und als Stürmer permanent in Bewegung sein, um Lücken zu reißen.</p>
+                        <div class="bg-slate-100 p-4 rounded-lg relative aspect-[4/3] mt-6 border border-slate-200">
+                           <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 border-2 border-slate-300 rounded-full"></div>
+                           <div class="absolute top-[8%] left-1/2 -translate-x-1/2 formation-player formation-player-gk">TW</div>
+                           <div class="absolute top-[28%] left-[22%] -translate-x-1/2 -translate-y-1/2 formation-player formation-player-def">LIV</div>
+                           <div class="absolute top-[28%] left-1/2 -translate-x-1/2 -translate-y-1/2 formation-player formation-player-def">ZIV</div>
+                           <div class="absolute top-[28%] left-[78%] -translate-x-1/2 -translate-y-1/2 formation-player formation-player-def">RIV</div>
+                           <div class="absolute top-1/2 left-[15%] -translate-x-1/2 -translate-y-1/2 formation-player formation-player-mid">LAV</div>
+                           <div class="absolute top-1/2 left-[40%] -translate-x-1/2 -translate-y-1/2 formation-player formation-player-mid">LZM</div>
+                           <div class="absolute top-1/2 left-[60%] -translate-x-1/2 -translate-y-1/2 formation-player formation-player-mid">RZM</div>
+                           <div class="absolute top-1/2 left-[85%] -translate-x-1/2 -translate-y-1/2 formation-player formation-player-mid">RAV</div>
+                           <div class="absolute top-[85%] left-[25%] -translate-x-1/2 -translate-y-1/2 formation-player formation-player-fwd">LS</div>
+                           <div class="absolute top-[85%] left-1/2 -translate-x-1/2 -translate-y-1/2 formation-player formation-player-fwd">MS</div>
+                           <div class="absolute top-[85%] left-[75%] -translate-x-1/2 -translate-y-1/2 formation-player formation-player-fwd">RS</div>
+                        </div>
+                    </div>
+                    <div id="content-requirements" class="doctrine-content hidden">
+                        <h4>Das Profil des "Rodewald-Spielers"</h4>
+                        <p>Talent allein genügt nicht. Rodewald sucht Spieler mit einer professionellen DNA, die bereit sind, für den Erfolg mehr zu investieren als andere.</p>
+                        <ul class="list-disc pl-5">
+                            <li><strong>Technische Exzellenz:</strong> Fehlerfreie Ballverarbeitung ist die Grundvoraussetzung.</li>
+                            <li><strong>Spielintelligenz & Antizipation:</strong> Du musst nicht nur Anweisungen befolgen, sondern das Spiel lesen und vorausdenken.</li>
+                            <li><strong>Effizienz & Killerinstinkt:</strong> "Show" ist unerwünscht. Was zählt, sind Tore und Vorlagen. Jede Aktion muss zielgerichtet sein.</li>
+                            <li><strong>Physische & mentale Robustheit:</strong> Du musst bereit sein, körperlich an deine Grenzen zu gehen und mit konstruktiver, direkter Kritik umgehen können.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="trajectory" class="my-20">
+            <h3>Karriere-Analyse: Triumph und Feuerprobe</h3>
+            <p>Rodewalds Weg bei Hansa Rostock ist eine Fallstudie über Aufstieg und Widerstand. Der souveräne Meistertitel mit der U23 in der Oberliga war die Blaupause seines Erfolgs. Die anschließende Saison in der Regionalliga, die mit seiner Entlassung endete, war die unvermeidliche Konfrontation seiner idealistischen Philosophie mit der harten Realität einer physisch überlegenen Liga – und einem zu jungen Kader.</p>
+            <div class="mt-8">
+                <h4 class="text-center">Leistungsbilanz: Hansa Rostock II (Punkte pro Spiel)</h4>
+                <div class="chart-container mt-4">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+            <p class="text-sm text-slate-500 mt-8">Die Daten zeigen deutlich den überragenden Erfolg in der Oberliga und die Schwierigkeiten in der Regionalliga. Die entscheidende Lehre für seine Zeit in Eilenburg wird sein, die richtige Balance zwischen philosophischer Treue und pragmatischer Anpassung zu finden, um sein System nachhaltig zu etablieren.</p>
+        </section>
+        
+        <section id="man-manager" class="my-20">
+            <h3>Mensch & Manager: Die Ironman-Mentalität</h3>
+            <p>Zwei Zitate definieren Kevin Rodewald als Führungspersönlichkeit: "Immer mehr machen als alle anderen" und "Ich bin sehr nah an meinen Spielern dran". Diese Pole – extreme Anforderung und menschliche Nähe – bilden den Kern seines Führungsstils.</p>
+            <blockquote class="border-l-4 border-teal-600 pl-6 my-8 italic text-xl">
+                Seine private Leidenschaft für Extremsportarten wie den Ironman-Triathlon ist der physische Beweis seiner Philosophie. Er verlangt nichts von dir, was er nicht selbst bereit ist zu leisten. Wenn er über das Überwinden von Grenzen spricht, weiß er, wovon er redet.
+            </blockquote>
+            <p>Diese Authentizität ist seine größte Stärke im Umgang mit dem Team. Die Forderung nach höchster Fitness und mentaler Härte kommt von jemandem, der diese Werte verkörpert. Gleichzeitig ist seine erklärte Leidenschaft die Entwicklung von Spielern. Er ist kein unnahbarer Schleifer, sondern ein intensiver Wegbegleiter, der in die Fähigkeiten seiner Spieler investiert und ihnen vertraut.</p>
+        </section>
+        
+        <section id="gemini-lab" class="my-20 p-8 bg-slate-100 rounded-lg border border-slate-200">
+            <h3 class="!mt-0">Dein Vorbereitungs-Labor</h3>
+            <p>Du bist bereits beim FC Eilenburg. Nutze die Gemini KI, um dich optimal auf die Arbeit mit Deinem neuen Cheftrainer Kevin Rodewald vorzubereiten.</p>
+            
+            <div class="mt-8 grid grid-cols-1 gap-12">
+                <div>
+                    <h4>Taktik-Sitzung simulieren</h4>
+                    <p class="text-base">Wie würde Rodewald das Team auf einen bestimmten Gegnertyp einstellen? Wähle einen Stil und erhalte ein KI-generiertes Taktik-Briefing.</p>
+                    <select id="opponent-style" class="mt-4 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm rounded-md">
+                        <option>Defensiv-Bollwerk</option>
+                        <option>Konter-Team</option>
+                        <option>Pressing-Monster</option>
+                        <option>Ballbesitz-orientiertes Team</option>
+                        <option>Dominantes Top-5 Team</option>
+                    </select>
+                    <button id="generate-tactic" class="font-headline mt-4 w-full bg-teal-600 text-white font-bold py-2.5 px-4 rounded-md hover:bg-teal-700 transition duration-300 disabled:bg-gray-400">
+                        Briefing generieren
+                    </button>
+                    <div id="tactic-result" class="gemini-result">Wähle einen Gegnertyp und klicke auf "Generieren", um die Simulation zu starten.</div>
+                </div>
+
+                <div>
+                    <h4>Dein persönlicher Entwicklungsplan</h4>
+                    <p class="text-base">Gib Deine Daten ein, und die KI erstellt einen beispielhaften 6-Wochen-Plan, wie ihn Rodewald für Dich entwerfen könnte.</p>
+                    <div class="mt-4 space-y-4">
+                        <input type="text" id="player-position" placeholder="Deine Position (z.B. Innenverteidiger)" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                        <input type="text" id="player-strength" placeholder="Deine größte Stärke (z.B. Schnelligkeit)" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                        <input type="text" id="player-weakness" placeholder="Dein Verbesserungspotenzial (z.B. Kopfball)" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                    </div>
+                    <button id="generate-plan" class="font-headline mt-4 w-full bg-teal-600 text-white font-bold py-2.5 px-4 rounded-md hover:bg-teal-700 transition duration-300 disabled:bg-gray-400">
+                        Entwicklungsplan erstellen
+                    </button>
+                    <div id="plan-result" class="gemini-result">Fülle die Felder aus, um Deinen persönlichen Plan zu erhalten.</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="opportunity" class="my-20">
+            <h3>Analyse deiner Chance</h3>
+            <p>Der Trainerwechsel ist ein kritischer Moment. Für dich als Spieler des FC Eilenburg bedeutet der Antritt von Kevin Rodewald eine Neudefinition der Erwartungen und eine klare Chance, dich unter einem der ambitioniertesten jungen Trainer der Liga neu zu beweisen und weiterzuentwickeln.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+                <div class="border border-green-200 bg-green-50/50 p-6 rounded-md">
+                    <h4 class="!mt-0 text-green-800">Die Chancen</h4>
+                     <ul class="list-none !pl-0 !-ml-0">
+                        <li class="flex items-start">
+                            <span class="text-green-600 mr-3 mt-1">✔</span>
+                            <span><strong class="font-semibold">Neustart & Vision:</strong> Du bist Teil eines echten Neuaufbaus unter einem Trainer mit einem klaren, modernen Plan.</span>
+                        </li>
+                        <li class="flex items-start mt-3">
+                             <span class="text-green-600 mr-3 mt-1">✔</span>
+                             <span><strong class="font-semibold">Garantierte Entwicklung:</strong> Das Training wird dich an deine Grenzen bringen, aber es wird dich unweigerlich zu einem besseren, kompletteren Spieler machen.</span>
+                        </li>
+                    </ul>
+                </div>
+                 <div class="border border-red-200 bg-red-50/50 p-6 rounded-md">
+                    <h4 class="!mt-0 text-red-800">Die Herausforderungen</h4>
+                      <ul class="list-none !pl-0 !-ml-0">
+                        <li class="flex items-start">
+                             <span class="text-red-600 mr-3 mt-1">✖</span>
+                             <span><strong class="font-semibold">Permanente Höchstleistung:</strong> Die Komfortzone endet am ersten Trainingstag. Erwartet wird 100% Einsatz, immer.</span>
+                        </li>
+                         <li class="flex items-start mt-3">
+                            <span class="text-red-600 mr-3 mt-1">✖</span>
+                             <span><strong class="font-semibold">Mentale Prüfung:</strong> Du musst mit direktem Feedback umgehen können und die Resilienz besitzen, dich von Rückschlägen nicht entmutigen zu lassen.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-900 text-gray-400 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm">
+            <p>&copy; 2024 Spieler-Dossier. Alle Daten basieren auf öffentlich zugänglichen Informationen. Erstellt zur Analyse und Entscheidungsfindung.</p>
+        </div>
+    </footer>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // Doctrine Tabs
+            const doctrineButtons = document.querySelectorAll('.doctrine-button');
+            const doctrineContents = document.querySelectorAll('.doctrine-content');
+
+            doctrineButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetId = button.dataset.target;
+                    
+                    doctrineButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    doctrineContents.forEach(section => {
+                        if (section.id === targetId) {
+                            section.classList.remove('hidden');
+                            section.classList.add('active');
+                        } else {
+                            section.classList.add('hidden');
+                            section.classList.remove('active');
+                        }
+                    });
+                });
+            });
+
+            // Chart.js
+            const performanceData = {
+                labels: ['21/22 (Oberliga)', '22/23 (Oberliga)', '23/24 (Regionalliga)'],
+                pointsPerGame: [1.94, 2.00, 0.72]
+            };
+
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: performanceData.labels,
+                    datasets: [{
+                        label: 'Punkte pro Spiel',
+                        data: performanceData.pointsPerGame,
+                        backgroundColor: (context) => {
+                             const chart = context.chart;
+                             const {ctx, chartArea} = chart;
+                             if (!chartArea) { return null; }
+                             const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                             gradient.addColorStop(0, 'rgba(13, 148, 136, 0.2)');
+                             gradient.addColorStop(1, 'rgba(13, 148, 136, 0.8)');
+                             return gradient;
+                        },
+                        borderColor: '#0d9488',
+                        borderWidth: 2,
+                        borderRadius: 4,
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            grid: {
+                                drawBorder: false,
+                            },
+                            ticks: {
+                                font: { family: "'Roboto Slab', serif" }
+                            }
+                        }, 
+                        x: { 
+                           grid: {
+                                display: false,
+                            },
+                             ticks: {
+                                font: { family: "'Roboto Slab', serif" }
+                            }
+                        } 
+                    },
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: { 
+                            enabled: true,
+                            backgroundColor: '#1a1a1a',
+                            titleFont: { family: "'Roboto Slab', serif", size: 14 },
+                            bodyFont: { family: "'Source Serif 4', serif", size: 12 },
+                            padding: 12,
+                            callbacks: { 
+                                label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(2)}`
+                            } 
+                        }
+                    }
+                }
+            });
+
+            // Active Nav Link on Scroll
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main > section');
+
+            function changeActiveLink() {
+                let index = sections.length;
+                while(--index && window.scrollY + 100 < sections[index].offsetTop) {}
+                navLinks.forEach((link) => link.classList.remove('active'));
+                const activeLink = document.querySelector(`.nav-link[href="#${sections[index]?.id}"]`);
+                if(activeLink) activeLink.classList.add('active');
+            }
+
+            changeActiveLink();
+            window.addEventListener('scroll', changeActiveLink);
+
+            // Smooth Scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+                });
+            });
+
+            // Gemini API Integration
+            const generateTacticBtn = document.getElementById('generate-tactic');
+            const tacticResultEl = document.getElementById('tactic-result');
+            const opponentStyleEl = document.getElementById('opponent-style');
+
+            const generatePlanBtn = document.getElementById('generate-plan');
+            const planResultEl = document.getElementById('plan-result');
+            const playerPositionEl = document.getElementById('player-position');
+            const playerStrengthEl = document.getElementById('player-strength');
+            const playerWeaknessEl = document.getElementById('player-weakness');
+            
+            const apiKey = ""; 
+
+            async function callGemini(prompt, button, resultElement) {
+                button.disabled = true;
+                resultElement.innerHTML = '<div class="flex justify-center items-center h-full"><span class="loader"></span></div>';
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error(`API-Fehler: ${response.status}`);
+                    
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates[0]?.content.parts[0]?.text) {
+                        resultElement.innerHTML = result.candidates[0].content.parts[0].text;
+                    } else {
+                        throw new Error("Keine gültige Antwort von der API erhalten.");
+                    }
+                } catch (error) {
+                    console.error("Fehler bei der Gemini API-Anfrage:", error);
+                    resultElement.innerHTML = `<p class="text-red-600">Ein Fehler ist aufgetreten: ${error.message}. Bitte versuchen Sie es später erneut.</p>`;
+                } finally {
+                    button.disabled = false;
+                }
+            }
+            
+            generateTacticBtn.addEventListener('click', () => {
+                const opponentStyle = opponentStyleEl.value;
+                const prompt = `Du bist Trainer Kevin Rodewald. Dein Team, FC Eilenburg, spielt ein 3-4-3 System mit Fokus auf Ballbesitz. Du bereitest Dein Team auf ein Spiel gegen einen Gegner vor, der als "${opponentStyle}" bekannt ist. Erstelle ein kurzes, prägnantes Taktik-Briefing für Deine Spieler. Skizziere die Hauptbedrohungen und erkläre die offensiven und defensiven Anpassungen, um sie zu kontern, während Du Deinem dominanten Stil treu bleibst. Nutze eine klare, direkte Sprache, die ein Spieler versteht. Formatiere die Antwort mit klaren Überschriften (**Fett**) und Stichpunkten (* kursiv).`;
+                callGemini(prompt, generateTacticBtn, tacticResultEl);
+            });
+
+            generatePlanBtn.addEventListener('click', () => {
+                const position = playerPositionEl.value;
+                const strength = playerStrengthEl.value;
+                const weakness = playerWeaknessEl.value;
+
+                if (!position || !strength || !weakness) {
+                    planResultEl.innerHTML = '<p class="text-red-600">Bitte fülle alle Felder aus, um einen Plan zu erstellen.</p>';
+                    return;
+                }
+                
+                const prompt = `Du bist der methodische Fußballtrainer Kevin Rodewald, bekannt für Deinen Fokus auf hohe Intensität, technische Exzellenz und taktische Intelligenz. Erstelle einen personalisierten 6-Wochen-Entwicklungsplan für einen Spieler auf der Position "${position}" mit der Stärke "${strength}" und dem Verbesserungspotenzial "${weakness}". Der Plan muss zu Deiner anspruchsvollen Philosophie passen und konkrete Übungen, taktische Aufgaben und Ratschläge zur körperlichen Verfassung enthalten. Gliedere den Plan in wöchentliche Phasen (**Woche 1-2**, etc.) und nutze klare Überschriften und Stichpunkte (* kursiv).`;
+                callGemini(prompt, generatePlanBtn, planResultEl);
+            });
+        });
+    </script>
+
+</body>
+</html>
